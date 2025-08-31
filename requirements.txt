@@ -1,0 +1,41 @@
+# Django Framework
+Django>=4.2,<5.0
+
+# Database
+psycopg2-binary>=2.9.0
+
+# Django REST Framework
+djangorestframework>=3.14.0
+djangorestframework-simplejwt>=5.2.0
+
+# Redis
+redis>=4.5.0
+django-redis>=5.2.0
+
+# Environment Variables
+python-decouple>=3.6
+
+# CORS Headers (for frontend integration)
+django-cors-headers>=4.0.0
+
+# API Documentation
+drf-spectacular>=0.26.0
+
+# Email
+django-extensions>=3.2.0
+
+# Security
+django-ratelimit>=4.0.0
+
+# Production Server
+gunicorn>=20.1.0
+whitenoise>=6.0.0
+
+# Development
+pytest>=7.0.0
+pytest-django>=4.5.0
+factory-boy>=3.2.0
+
+# Utilities
+Pillow>=9.0.0
+requests>=2.28.0
