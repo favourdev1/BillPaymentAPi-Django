@@ -8,7 +8,7 @@ services:
     environment:
       POSTGRES_DB: billpayment_db
       POSTGRES_USER: billpayment_user
-      POSTGRES_PASSWORD: T2uieck8UAgUheBAvfpaZ21jJSGA9Pto
+      POSTGRES_PASSWORD: billpayment_pass
     ports:
       - "5432:5432"
     healthcheck:
@@ -41,11 +41,7 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
-    environment:
-      - DB_HOST=dpg-d2q196fdiees73cfn31g-a
-      - DB_PORT=5432
-      - REDIS_HOST=redis
-      - REDIS_PORT=6379
+    # Environment variables are loaded from .env.docker file
 
 volumes:
   postgres_data:
