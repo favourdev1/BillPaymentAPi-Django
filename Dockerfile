@@ -16,7 +16,6 @@ RUN apt-get update \
         build-essential \
         libpq-dev \
         curl \
-        netcat-openbsd \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Python dependencies
@@ -26,15 +25,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy project
 COPY . /app/
 
-# Copy and set up entrypoint script
-COPY entrypoint.sh /app/entrypoint.sh
-RUN chmod +x /app/entrypoint.sh
-
 # Expose port
 EXPOSE 8000
 
-# Set entrypoint
-ENTRYPOINT ["/app/entrypoint.sh"]
-
-# Default command
-CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
+# Default command for Railway (will be overridden by Procfile)
+CMD ["gunicorn", "Billpayment.wsgi:application", "--bind", "0.0.0.0:8000"]
