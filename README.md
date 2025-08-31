@@ -12,6 +12,10 @@ A comprehensive Django REST API for bill payment management with user authentica
 - **Redis Integration**: Token storage and caching
 - **Email Integration**: Password reset emails
 - **Security**: CORS support, secure headers, and password validation
+- **Rate Limiting**: Built-in rate limiting on authentication endpoints
+- **Docker Support**: Complete Docker setup with PostgreSQL and Redis
+- **Standardized API**: Consistent response format across all endpoints
+- **Comprehensive Testing**: Full test suite with 19+ unit tests
 
 ## Tech Stack
 
@@ -30,6 +34,7 @@ A comprehensive Django REST API for bill payment management with user authentica
 - PostgreSQL (for production)
 - Redis (for production)
 - Git
+- Docker & Docker Compose (optional, for containerized development)
 
 ### Installation
 
@@ -70,6 +75,33 @@ A comprehensive Django REST API for bill payment management with user authentica
    ```bash
    python manage.py runserver
    ```
+
+### Docker Setup (Recommended)
+
+For a complete development environment with PostgreSQL and Redis:
+
+1. **Clone and navigate to project**
+   ```bash
+   git clone <repository-url>
+   cd BillPaymentApi
+   ```
+
+2. **Start with Docker Compose**
+   ```bash
+   docker-compose up --build
+   ```
+
+3. **Run migrations** (in a new terminal)
+   ```bash
+   docker-compose exec web python manage.py migrate
+   ```
+
+4. **Create superuser** (optional)
+   ```bash
+   docker-compose exec web python manage.py createsuperuser
+   ```
+
+The application will be available at `http://localhost:8000`
 
 ## Environment Variables
 
@@ -242,15 +274,39 @@ Redis is optional for development. The application will fall back to in-memory s
 
 ### Run Tests
 
+**Local Environment:**
 ```bash
 python manage.py test
 ```
+
+**Docker Environment:**
+```bash
+docker-compose exec web python manage.py test
+```
+
+### Test Coverage
+
+The project includes comprehensive test coverage:
+- **19+ Unit Tests** covering all authentication endpoints
+- **User Registration Tests**: Validation, error handling, duplicate emails
+- **Authentication Tests**: Login, logout, JWT token management
+- **Password Reset Tests**: Token generation, validation, and reset flow
+- **Profile Management Tests**: User profile retrieval and updates
+- **Rate Limiting Tests**: Endpoint protection verification
 
 ### API Testing
 
 Use the interactive API documentation at:
 - Swagger UI: http://localhost:8000/api/docs/
 - ReDoc: http://localhost:8000/api/redoc/
+
+### Rate Limiting
+
+The following endpoints have rate limiting enabled:
+- **Login**: 5 requests per minute per IP
+- **Forgot Password**: 3 requests per minute per IP
+- **Reset Password**: 3 requests per minute per IP
+- **Verify Reset Token**: 10 requests per minute per IP
 
 ## Deployment
 
@@ -278,23 +334,35 @@ Use the interactive API documentation at:
    - Configure CORS properly
    - Set secure headers
 
-### Docker Deployment (Optional)
+### Docker Deployment
 
-Create a `Dockerfile`:
+The project includes production-ready Docker configuration:
 
-```dockerfile
-FROM python:3.11-slim
+**Development with Docker Compose:**
+```bash
+docker-compose up --build
+```
 
-WORKDIR /app
+**Production Docker Build:**
+```bash
+docker build -t billpayment-api .
+docker run -p 8000:8000 billpayment-api
+```
 
-COPY requirements.txt .
-RUN pip install -r requirements.txt
+**Environment Variables for Docker:**
+Use `.env.docker` for Docker-specific configuration:
+```env
+# Database (PostgreSQL in Docker)
+DB_HOST=db
+DB_PORT=5432
+DB_NAME=billpayment_db
+DB_USER=postgres
+DB_PASSWORD=postgres
 
-COPY . .
-
-EXPOSE 8000
-
-CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
+# Redis (Redis in Docker)
+REDIS_HOST=redis
+REDIS_PORT=6379
+REDIS_DB=0
 ```
 
 ### Heroku Deployment
@@ -315,6 +383,32 @@ CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
    git push heroku main
    ```
 
+## API Response Format
+
+All API endpoints return standardized responses:
+
+**Success Response:**
+```json
+{
+  "status": true,
+  "message": "Success message",
+  "data": {
+    // Response data
+  }
+}
+```
+
+**Error Response:**
+```json
+{
+  "status": false,
+  "message": "Error message",
+  "errors": {
+    // Validation errors (if applicable)
+  }
+}
+```
+
 ## Project Structure
 
 ```
@@ -322,19 +416,27 @@ BillPaymentApi/
 ├── Billpayment/          # Main project directory
 │   ├── __init__.py
 │   ├── settings.py       # Django settings
+│   ├── test_settings.py  # Test-specific settings
 │   ├── urls.py          # Main URL configuration
 │   ├── wsgi.py          # WSGI configuration
 │   └── asgi.py          # ASGI configuration
 ├── accounts/            # User management app
 │   ├── models.py        # User model
 │   ├── serializers.py   # API serializers
-│   ├── views.py         # API views
+│   ├── views.py         # API views (class-based with StandardResponseMixin)
 │   ├── urls.py          # App URL configuration
 │   ├── admin.py         # Admin configuration
 │   ├── utils.py         # Utility functions
+│   ├── mixins.py        # Response standardization mixin
+│   ├── response_utils.py # Response utility functions
+│   ├── tests.py         # Comprehensive unit tests
+│   ├── test_rate_limiting.py # Rate limiting tests
 │   └── migrations/      # Database migrations
 ├── requirements.txt     # Python dependencies
 ├── .env                 # Environment variables
+├── .env.docker         # Docker environment variables
+├── Dockerfile          # Docker configuration
+├── docker-compose.yml  # Docker Compose setup
 ├── manage.py           # Django management script
 └── README.md           # This file
 ```

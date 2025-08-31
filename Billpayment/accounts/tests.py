@@ -28,10 +28,13 @@ class UserRegistrationTestCase(APITestCase):
         response = self.client.post(self.registration_url, self.valid_user_data)
         
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        self.assertIn('tokens', response.data)
-        self.assertIn('access', response.data['tokens'])
-        self.assertIn('refresh', response.data['tokens'])
-        self.assertIn('user', response.data)
+        self.assertTrue(response.data['status'])
+        self.assertEqual(response.data['message'], 'User registered successfully')
+        self.assertIn('data', response.data)
+        self.assertIn('tokens', response.data['data'])
+        self.assertIn('access', response.data['data']['tokens'])
+        self.assertIn('refresh', response.data['data']['tokens'])
+        self.assertIn('user', response.data['data'])
         
         # Verify user was created in database
         user = User.objects.get(email='test@example.com')
@@ -51,7 +54,12 @@ class UserRegistrationTestCase(APITestCase):
         response = self.client.post(self.registration_url, self.valid_user_data)
         
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertIn('email', response.data)
+        self.assertFalse(response.data['status'])
+        self.assertEqual(response.data['message'], 'Validation failed')
+        self.assertIn('errors', response.data)
+        # Check if any error contains 'email'
+        error_text = ' '.join(response.data['errors'])
+        self.assertIn('email', error_text.lower())
     
     def test_registration_with_invalid_email(self):
         """Test registration fails with invalid email format"""
@@ -61,7 +69,12 @@ class UserRegistrationTestCase(APITestCase):
         response = self.client.post(self.registration_url, invalid_data)
         
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertIn('email', response.data)
+        self.assertFalse(response.data['status'])
+        self.assertEqual(response.data['message'], 'Validation failed')
+        self.assertIn('errors', response.data)
+        # Check if any error contains 'email'
+        error_text = ' '.join(response.data['errors'])
+        self.assertIn('email', error_text.lower())
     
     def test_registration_with_weak_password(self):
         """Test registration fails with weak password"""
@@ -72,7 +85,12 @@ class UserRegistrationTestCase(APITestCase):
         response = self.client.post(self.registration_url, weak_data)
         
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertIn('password', response.data)
+        self.assertFalse(response.data['status'])
+        self.assertEqual(response.data['message'], 'Validation failed')
+        self.assertIn('errors', response.data)
+        # Check if any error contains 'password'
+        error_text = ' '.join(response.data['errors'])
+        self.assertIn('password', error_text.lower())
     
     def test_registration_with_mismatched_passwords(self):
         """Test registration fails when passwords don't match"""
@@ -82,7 +100,12 @@ class UserRegistrationTestCase(APITestCase):
         response = self.client.post(self.registration_url, mismatch_data)
         
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertIn('password_confirm', response.data)
+        self.assertFalse(response.data['status'])
+        self.assertEqual(response.data['message'], 'Validation failed')
+        self.assertIn('errors', response.data)
+        # Check if any error contains 'password_confirm'
+        error_text = ' '.join(response.data['errors'])
+        self.assertIn('password_confirm', error_text.lower())
     
     def test_registration_with_missing_fields(self):
         """Test registration fails with missing required fields"""
@@ -95,9 +118,14 @@ class UserRegistrationTestCase(APITestCase):
         response = self.client.post(self.registration_url, incomplete_data)
         
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertIn('first_name', response.data)
-        self.assertIn('last_name', response.data)
-        self.assertIn('password_confirm', response.data)
+        self.assertFalse(response.data['status'])
+        self.assertEqual(response.data['message'], 'Validation failed')
+        self.assertIn('errors', response.data)
+        # Check if errors contain required fields
+        error_text = ' '.join(response.data['errors'])
+        self.assertIn('first_name', error_text.lower())
+        self.assertIn('last_name', error_text.lower())
+        self.assertIn('password_confirm', error_text.lower())
 
 
 class UserLoginTestCase(APITestCase):
@@ -123,11 +151,14 @@ class UserLoginTestCase(APITestCase):
         response = self.client.post(self.login_url, login_data)
         
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertIn('tokens', response.data)
-        self.assertIn('access', response.data['tokens'])
-        self.assertIn('refresh', response.data['tokens'])
-        self.assertIn('user', response.data)
-        self.assertEqual(response.data['user']['email'], 'test@example.com')
+        self.assertTrue(response.data['status'])
+        self.assertEqual(response.data['message'], 'Login successful')
+        self.assertIn('data', response.data)
+        self.assertIn('tokens', response.data['data'])
+        self.assertIn('access', response.data['data']['tokens'])
+        self.assertIn('refresh', response.data['data']['tokens'])
+        self.assertIn('user', response.data['data'])
+        self.assertEqual(response.data['data']['user']['email'], 'test@example.com')
     
     def test_login_with_invalid_email(self):
         """Test login fails with non-existent email"""
@@ -139,7 +170,8 @@ class UserLoginTestCase(APITestCase):
         response = self.client.post(self.login_url, login_data)
         
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
-        self.assertIn('error', response.data)
+        self.assertFalse(response.data['status'])
+        self.assertIn('message', response.data)
     
     def test_login_with_invalid_password(self):
         """Test login fails with incorrect password"""
@@ -151,7 +183,8 @@ class UserLoginTestCase(APITestCase):
         response = self.client.post(self.login_url, login_data)
         
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
-        self.assertIn('error', response.data)
+        self.assertFalse(response.data['status'])
+        self.assertIn('message', response.data)
     
     def test_login_with_missing_fields(self):
         """Test login fails with missing required fields"""
@@ -163,6 +196,8 @@ class UserLoginTestCase(APITestCase):
         response = self.client.post(self.login_url, incomplete_data)
         
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertFalse(response.data['status'])
+        self.assertIn('message', response.data)
 
 
 class PasswordResetTestCase(APITestCase):
@@ -193,6 +228,7 @@ class PasswordResetTestCase(APITestCase):
         response = self.client.post(self.forgot_password_url, data)
         
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertTrue(response.data['status'])
         self.assertIn('message', response.data)
         mock_generate.assert_called_once()
         mock_store.assert_called_once()
@@ -205,6 +241,7 @@ class PasswordResetTestCase(APITestCase):
         
         # Should return success to prevent email enumeration
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertTrue(response.data['status'])
         self.assertIn('message', response.data)
     
     @patch('Billpayment.accounts.views.get_reset_token')
@@ -250,7 +287,8 @@ class PasswordResetTestCase(APITestCase):
         response = self.client.post(self.reset_password_url, data)
         
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertIn('error', response.data)
+        self.assertFalse(response.data['status'])
+        self.assertIn('message', response.data)
     
     @patch('Billpayment.accounts.views.get_reset_token')
     def test_verify_reset_token_valid(self, mock_get):
@@ -269,8 +307,11 @@ class PasswordResetTestCase(APITestCase):
         response = self.client.post(self.verify_token_url, data)
         
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertIn('valid', response.data)
-        self.assertTrue(response.data['valid'])
+        self.assertTrue(response.data['status'])
+        self.assertIn('message', response.data)
+        self.assertIn('data', response.data)
+        self.assertIn('valid', response.data['data'])
+        self.assertTrue(response.data['data']['valid'])
     
     @patch('Billpayment.accounts.views.get_reset_token')
     def test_verify_reset_token_invalid(self, mock_get):
@@ -285,8 +326,8 @@ class PasswordResetTestCase(APITestCase):
         response = self.client.post(self.verify_token_url, data)
         
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertIn('valid', response.data)
-        self.assertFalse(response.data['valid'])
+        self.assertFalse(response.data['status'])
+        self.assertIn('message', response.data)
 
 
 class UserProfileTestCase(APITestCase):
@@ -311,9 +352,12 @@ class UserProfileTestCase(APITestCase):
         response = self.client.get(self.profile_url)
         
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data['email'], 'test@example.com')
-        self.assertEqual(response.data['first_name'], 'Test')
-        self.assertEqual(response.data['last_name'], 'User')
+        self.assertTrue(response.data['status'])
+        self.assertIn('message', response.data)
+        self.assertIn('data', response.data)
+        self.assertEqual(response.data['data']['user']['email'], 'test@example.com')
+        self.assertEqual(response.data['data']['user']['first_name'], 'Test')
+        self.assertEqual(response.data['data']['user']['last_name'], 'User')
     
     def test_get_user_profile_unauthenticated(self):
         """Test getting user profile when not authenticated"""
@@ -333,8 +377,11 @@ class UserProfileTestCase(APITestCase):
         response = self.client.patch(self.profile_url, update_data)
         
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data['first_name'], 'Updated')
-        self.assertEqual(response.data['last_name'], 'Name')
+        self.assertTrue(response.data['status'])
+        self.assertIn('message', response.data)
+        self.assertIn('data', response.data)
+        self.assertEqual(response.data['data']['user']['first_name'], 'Updated')
+        self.assertEqual(response.data['data']['user']['last_name'], 'Name')
         
         # Verify changes in database
         self.user.refresh_from_db()
