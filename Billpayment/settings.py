@@ -89,16 +89,10 @@ WSGI_APPLICATION = 'Billpayment.wsgi.application'
 
 # Auto-detect database configuration
 if config('DATABASE_URL', default=None):
-    # Use PostgreSQL when DATABASE_URL is provided (Docker/Production)
+    # Use PostgreSQL when DATABASE_URL is provided (Railway/Production)
+    import dj_database_url
     DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.postgresql',
-            'NAME': config('DB_NAME'),
-            'USER': config('DB_USER'),
-            'PASSWORD': config('DB_PASSWORD'),
-            'HOST': config('DB_HOST', default='localhost'),
-            'PORT': config('DB_PORT', default='5432'),
-        }
+        'default': dj_database_url.parse(config('DATABASE_URL'))
     }
 else:
     # Use SQLite for local development
@@ -230,6 +224,7 @@ CORS_ALLOWED_ORIGINS = [
     "http://127.0.0.1:3000",
     "http://localhost:8000",
     "http://127.0.0.1:8000",
+    "https://billpaymentapi-django.onrender.com"
 ]
 
 CORS_ALLOW_CREDENTIALS = True
