@@ -179,6 +179,9 @@ PASSWORD_RESET_TIMEOUT=3600
 
 ## API Usage Examples
 
+## Live url Link:
+https://billpaymentapi-django.onrender.com
+
 ### User Registration
 
 ```bash
