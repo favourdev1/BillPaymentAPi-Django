@@ -40,14 +40,14 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    
+
     # Third party apps
     'rest_framework',
     'rest_framework_simplejwt',
     'corsheaders',
     'drf_spectacular',
     'django_ratelimit',
-    
+
     # Local apps
     'Billpayment.accounts',
 ]
@@ -89,10 +89,17 @@ WSGI_APPLICATION = 'Billpayment.wsgi.application'
 
 # Auto-detect database configuration
 if config('DATABASE_URL', default=None):
-    # Use PostgreSQL when DATABASE_URL is provided (Railway/Production)
-    import dj_database_url
+    # Use PostgreSQL when DATABASE_URL is provided (Docker/Production)
+
     DATABASES = {
-        'default': dj_database_url.parse(config('DATABASE_URL'))
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': config('DB_NAME'),
+            'USER': config('DB_USER'),
+            'PASSWORD': config('DB_PASSWORD'),
+            'HOST': config('DB_HOST', default='localhost'),
+            'PORT': config('DB_PORT', default='5432'),
+        }
     }
 else:
     # Use SQLite for local development
